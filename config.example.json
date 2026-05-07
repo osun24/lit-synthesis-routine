@@ -1,0 +1,47 @@
+{
+  "arxiv_categories": [
+    "cs.LG",
+    "cs.NE",
+    "q-bio.NC",
+    "q-bio.QM",
+    "physics.bio-ph",
+    "cond-mat.soft",
+    "math.DS",
+    "econ.GN"
+  ],
+  "watch_authors": [
+    {
+      "name": "Carl Friston",
+      "semantic_scholar_id": "2299236",
+      "note": "Active inference, free energy principle"
+    },
+    {
+      "name": "Yoshua Bengio",
+      "semantic_scholar_id": "1701686",
+      "note": "Deep learning, causal representation"
+    },
+    {
+      "name": "Your Author Here",
+      "semantic_scholar_id": "FIND_AT_semanticscholar.org/author/NAME",
+      "note": "Why you follow this person"
+    }
+  ],
+  "lookback_days": 7,
+  "max_papers_per_category": 60,
+  "ranking": {
+    "cross_domain_surprise_weight": 0.40,
+    "citation_velocity_weight": 0.25,
+    "venue_prestige_weight": 0.15,
+    "recency_weight": 0.20,
+    "recency_halflife_days": 180
+  },
+  "credibility_filters": {
+    "discard_predatory_journals": true,
+    "min_venue_quartile": 3,
+    "allow_preprints_if_cited_min": 0,
+    "allow_preprints_older_than_days": 0
+  },
+  "digest_output_file": "digest.md",
+  "max_connections_in_digest": 8,
+  "max_author_papers_per_author": 5
+}
