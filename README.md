@@ -1,33 +1,36 @@
 # Literature Synthesis Routine
 
-A Claude Code routine that runs weekly, scans recent scientific literature across multiple fields, tracks specific authors, and surfaces non-obvious cross-domain connections as a structured digest.
+A Claude Code routine that runs weekly, scans recent scientific literature across multiple sources and fields via the [Paperclip MCP](https://paperclip.gxl.ai), tracks specific authors, and surfaces non-obvious cross-domain connections as a structured digest.
 
 ## What it does
 
 Each week, the routine:
 
-1. Fetches recent papers from configured arXiv categories via the arXiv API
-2. Checks for new publications from a watchlist of specific authors via Semantic Scholar
-3. Enriches top candidates with citation and venue data
-4. Scores papers on cross-domain reach, citation velocity, venue prestige, and recency
-5. Identifies high-surprise pairs of papers from different fields with no shared citations but overlapping concepts
-6. Generates a hypothesis for each connection and a concrete research question
-7. Appends a structured section to `digest.md` and opens a pull request
+1. Searches **5 sources** (PubMed Central, arXiv, bioRxiv, medRxiv, OpenAlex) using concept-based queries via Paperclip
+2. Checks for new publications from a named author watchlist — no IDs required
+3. Runs a parallel AI map pass over top candidates to extract method, phenomenon, and field metadata
+4. Reads methods sections of high-interest papers for transferable technique detection
+5. Scores papers on cross-domain reach, citation velocity, venue prestige, and recency
+6. Identifies high-surprise pairs of papers from different fields with overlapping methods or structure
+7. Generates a testable hypothesis and research question for each connection
+8. Appends a structured section to `digest.md` and opens a pull request
 
 ## Output example
 
 ```markdown
 ## Week of 2026-05-04 — 2026-05-08
 
+*Sources: pmc, arxiv, biorxiv, medrxiv | Queries: 10 | Papers scanned: 312 | Papers after filter: 187*
+
 ### Watched Author Updates
 
 **Carl Friston** (Active inference, free energy principle)
-- [Variational message passing for hierarchical models](https://arxiv.org/abs/...) — one-sentence summary
-  Venue: PLOS Computational Biology | Citations: 3 | Fields: Neuroscience, CS
+- [Variational message passing for hierarchical models](https://doi.org/...) — one-sentence summary
+  Source: PMC | Venue: PLOS Computational Biology | Fields: Neuroscience, Statistics
 
 ### Cross-Domain Connections
 
-**1. cond-mat.soft ↔ q-bio.NC** | Score: 0.87 | Confidence: High
+**1. Soft Matter ↔ Systems Neuroscience** | Score: 0.87 | Confidence: High
 
 > If the topological defect dynamics described in active nematics (Paper A)
 > were mapped onto cortical travelling waves in neural tissue (Paper B),
@@ -35,12 +38,12 @@ Each week, the routine:
 > annihilation, testable with voltage imaging.
 
 - **Paper A:** [Defect dynamics in active nematics...](https://arxiv.org/abs/...)
-- **Paper B:** [Travelling waves during slow-wave sleep...](https://arxiv.org/abs/...)
+- **Paper B:** [Travelling waves during slow-wave sleep...](https://doi.org/...)
 - **Research question:** Do cortical wave termination sites show the spatial
   signatures of nematic defect annihilation under optical imaging?
-- **Why non-obvious:** No paper in either literature cites the other;
-  the connection requires mapping an order parameter from soft matter
-  onto a field variable in systems neuroscience.
+- **Why non-obvious:** Different citation communities (soft matter vs. neurophysiology),
+  different vocabulary (order parameter vs. field potential), different spatial scales —
+  the connection requires recognising that both are described by the same tensor PDE.
 ```
 
 ## Setup
@@ -60,17 +63,39 @@ cp config.example.json config.json
 
 Edit `config.json`:
 
-- **`arxiv_categories`** — arXiv category codes to monitor. Browse categories at [arxiv.org/help/api/user-manual](https://info.arxiv.org/help/api/user-manual.html#subject_classifications). Mix top-level categories (`cs.LG`) with cross-listed ones for broader coverage.
+- **`search_queries`** — concept-based search strings passed to Paperclip. Write these as natural language topics rather than database-specific category codes. Paperclip runs them in parallel across all configured sources and deduplicates results. Aim for 6–12 queries that cover your target fields from different angles.
 
-- **`watch_authors`** — authors whose new papers always appear in the digest, regardless of score. Find a Semantic Scholar author ID by searching [semanticscholar.org](https://www.semanticscholar.org), opening the author's profile, and copying the numeric ID from the URL (`/author/Name/1234567` → `"1234567"`).
+- **`sources`** — Paperclip source names to search. Options: `biorxiv`, `medrxiv`, `pmc`, `arxiv`, `abstracts_only` (OpenAlex, 150M abstracts). Default covers all full-text sources.
 
-- **`lookback_days`** — how many days back to scan. `7` matches a weekly cadence; increase to `14` if you run bi-weekly.
+- **`watch_authors`** — authors whose new papers always appear in the digest, regardless of score. Only `name` and `note` are required — Paperclip looks up authors by name. Use the full name as it appears on papers.
 
-- **`ranking`** — adjust weights if you want to prioritise citation velocity over cross-domain surprise, or vice versa. Weights must sum to 1.0.
+- **`lookback_days`** — how many days back to scan. `7` matches a weekly cadence; increase to `14` for bi-weekly.
 
-- **`max_connections_in_digest`** — number of connection pairs per weekly section. 5–8 is readable; more than 10 becomes noise.
+- **`max_papers_per_search`** — total papers to process after merging all search queries. 60–100 is the practical range; above 150 the map pass becomes slow.
 
-### 3. Create the Claude routine
+- **`ranking`** — adjust weights for scoring. `cross_domain_surprise_weight` should stay the largest; reducing `citation_velocity_weight` prevents bias toward hot topics in established fields. Weights must sum to 1.0.
+
+- **`max_connections_in_digest`** — connection pairs per weekly section. 5–8 is readable.
+
+### 3. Add Paperclip as a MCP connector
+
+Paperclip is the MCP that gives the routine access to 11M+ full-text papers and 150M+ abstracts across five scientific sources. It must be connected before creating the routine.
+
+**Add to Claude Code:**
+
+```bash
+claude mcp add --transport http paperclip https://paperclip.gxl.ai/mcp
+```
+
+Then authenticate: open Claude Code, run `/mcp`, and select **Authenticate** under the `paperclip` server. You'll need a free Paperclip API key from [paperclip.gxl.ai](https://paperclip.gxl.ai).
+
+**Add to the routine:**
+
+When creating the routine at `claude.ai/code/routines`, the Paperclip connector should appear in the **Connectors** tab (it syncs from your Claude Code config). Enable it for the routine.
+
+Alternatively, add it directly from the routine form under **Connectors → Add connector**.
+
+### 4. Create the Claude routine
 
 **Option A — Web UI**
 
@@ -78,9 +103,10 @@ Edit `config.json`:
 2. **Name:** `Weekly Literature Synthesis`
 3. **Prompt:** Copy the entire contents of [`routine-prompt.md`](./routine-prompt.md) into the prompt field
 4. **Repository:** Add this repo (or your fork)
-5. **Trigger:** Select **Weekly** — pick a day and time (Monday morning works well)
-6. **Branch push permission:** Leave default (`claude/`-prefixed branches only)
-7. Click **Create**
+5. **Connectors:** Enable **Paperclip**
+6. **Trigger:** Select **Weekly** — Monday morning works well
+7. **Branch push permission:** Leave default (`claude/`-prefixed branches only)
+8. Click **Create**
 
 **Option B — CLI**
 
@@ -89,89 +115,99 @@ Edit `config.json`:
 /schedule weekly literature synthesis every Monday at 8am
 ```
 
-Claude will walk through the same fields interactively. When asked for the prompt, paste the contents of `routine-prompt.md`. When asked for the repository, provide this repo's URL.
+When asked for the prompt, paste the contents of `routine-prompt.md`. When asked for the repository, provide this repo's URL. Add the Paperclip connector from the web UI after creation.
 
-To customise the cron expression (e.g. every other week):
+To set a custom cron expression (e.g. bi-weekly):
 
 ```bash
 /schedule update
-# Claude will prompt for the new cron expression
-# Bi-weekly example: 0 8 * * 1/2
+# Bi-weekly: 0 8 1-7,15-21 * 1
 ```
-
-### 4. Configure Semantic Scholar API access (recommended)
-
-The routine works without an API key but is rate-limited to ~100 requests/5 minutes. For reliable weekly runs across large category lists, set a free API key as an environment variable in the routine's environment settings:
-
-1. Request a key at [semanticscholar.org/product/api](https://www.semanticscholar.org/product/api)
-2. In the routine's **Environment** tab, add: `SEMANTIC_SCHOLAR_API_KEY=your_key_here`
-
-The routine's prompt includes the header `x-api-key: {SEMANTIC_SCHOLAR_API_KEY}` in all Semantic Scholar calls automatically.
 
 ### 5. Trigger a test run
 
-After creating the routine, click **Run now** on the routine's detail page to verify the first run produces a valid PR before the first scheduled Monday.
+Click **Run now** on the routine's detail page. Check the session output to confirm Paperclip is accessible and the first digest section is appended and a PR opened.
 
 ## Routine mechanics
 
 ### How papers are scored
 
-Each candidate paper receives a composite score:
-
 | Component | Weight | What it measures |
 |---|---|---|
-| Cross-domain reach | 40% | How many distinct fields cite this paper |
+| Cross-domain reach | 40% | Distinct secondary fields from the map pass |
 | Citation velocity | 25% | Citations per day since publication |
-| Venue prestige | 15% | SJR quartile of the publishing venue |
+| Venue prestige | 15% | Source-inferred prestige (PMC peer-reviewed > preprints) |
 | Recency | 20% | Exponential decay, half-life 180 days |
 
 ### How cross-domain pairs are found
 
-The routine looks for papers that are:
-- From different arXiv top-level namespaces (`cs.*` vs `q-bio.*` vs `physics.*`, etc.)
-- Citation-disjoint — no shared citing papers
-- Semantically overlapping — Claude judges concept similarity directly from the abstracts
+The routine uses Paperclip's `map` command to extract per-paper metadata (method, phenomenon, primary field, secondary fields) across the full candidate set. It then identifies pairs where:
 
-Each pair gets a **surprise bonus** (2×) the first time two top-level namespaces appear together in this repo's digest history, rewarding genuinely novel field combinations.
+- Primary fields are from different scientific domains
+- No shared citation lineage (different sources, no shared authors)
+- Methods, phenomena, or mathematical structures overlap semantically
+
+For the top 20 candidates, it also reads the **methods section** directly via `paperclip cat /papers/{id}/sections/Methods.lines`. This is what enables detection of connections that are only visible at the technique level — the layer where most genuine interdisciplinary transfer happens.
+
+Each pair gets a **surprise bonus** (2×) the first time two domains appear together in this repo's digest history.
 
 ### Watched author papers
 
-Watched author papers bypass the credibility filter and always appear in the digest if published within `lookback_days`. They are scored normally for the connections section — a watched author's paper can appear in a cross-domain pair.
+Add any researcher by name — no database ID required. Paperclip's `lookup author` command handles disambiguation. Watched-author papers:
+- Bypass credibility filtering
+- Always appear in the **Watched Author Updates** section
+- Are still scored and eligible to appear in connection pairs
 
-### Credibility filtering
+### What Paperclip adds over raw API calls
 
-Before scoring, the routine discards:
-- Papers with no known venue and zero citations (likely noise or auto-generated)
-- Venues flagged as predatory by Beall's criteria
-- Retraction notices
-
-Preprints are allowed through if `allow_preprints_if_cited_min` is satisfied (default: 0 — all preprints pass). Set to `3` to only include preprints with at least 3 citations.
+| Capability | Raw arXiv + Semantic Scholar | With Paperclip MCP |
+|---|---|---|
+| Sources | arXiv only | PMC, arXiv, bioRxiv, medRxiv, OpenAlex |
+| Full text | No (abstracts only) | Yes — sections, figures, supplements |
+| Author lookup | Requires numeric SS ID | By name |
+| Parallel search | Manual multi-request | `searches` command, native |
+| Methods reading | Not possible | `cat /papers/{id}/sections/Methods.lines` |
+| Rate limits | Manual handling | Managed by Paperclip |
 
 ## Extending the config
 
-### Adding author watchlists
-
-To add a new watched author, append to the `watch_authors` array in `config.json`:
+### Adding authors to the watchlist
 
 ```json
 {
   "name": "Ada Yonath",
-  "semantic_scholar_id": "2157392983",
   "note": "Ribosome crystallography, structural biology"
 }
 ```
 
-The `note` field appears in the digest next to the author's name.
+The `note` appears next to the author's name in the digest.
 
-### Changing field coverage
+### Changing topic coverage
 
-The default categories span machine learning, computational biology, biological physics, soft condensed matter, dynamical systems, and economics. To focus on a narrower interdisciplinary pair — say, materials science and synthetic biology — replace `arxiv_categories` with:
+Replace `search_queries` with concepts relevant to your fields. Write as natural language — Paperclip uses hybrid BM25 + vector search, so topic descriptions outperform keyword lists:
 
 ```json
-["cond-mat.mtrl-sci", "q-bio.BM", "q-bio.SC", "physics.chem-ph"]
+"search_queries": [
+  "materials informatics crystal structure prediction",
+  "synthetic biology genetic circuit design",
+  "microfluidics organ on a chip",
+  "topological materials quantum transport"
+]
 ```
 
-A full list of arXiv category codes is at [arxiv.org/category_taxonomy](https://arxiv.org/category_taxonomy).
+### Restricting to specific sources
+
+To limit to peer-reviewed literature only (slower but higher average credibility):
+
+```json
+"sources": ["pmc"]
+```
+
+To include preprints for fastest coverage of emerging work:
+
+```json
+"sources": ["biorxiv", "medrxiv", "arxiv"]
+```
 
 ## Repository structure
 
@@ -180,18 +216,17 @@ A full list of arXiv category codes is at [arxiv.org/category_taxonomy](https://
 ├── README.md              # this file
 ├── routine-prompt.md      # prompt to paste into the Claude routine
 ├── config.example.json    # template config — copy to config.json and edit
-├── config.json            # your config (gitignored if sensitive)
+├── config.json            # your config (gitignored)
 └── digest.md              # running weekly digest, appended by the routine
 ```
 
-`config.json` is listed in `.gitignore` if you add private author notes or API keys inline. Use the routine's Environment tab for secrets instead of committing them.
-
 ## Limitations
 
-- **arXiv only** for paper discovery. PubMed, bioRxiv, and SSRN are not queried in the default prompt — add fetch steps to `routine-prompt.md` to include them.
-- **Abstract-level analysis only.** The routine reads titles and abstracts, not full text. Deep methodological connections that are only visible in the methods section will be missed.
-- **No persistent memory across runs.** Each weekly run starts fresh. The "surprise bonus" for novel field pairs requires the routine to read the existing `digest.md` from the repo, which it does — but it has no vector index of prior papers.
-- **Semantic Scholar coverage gaps.** Some venues (especially non-English journals and grey literature) have incomplete metadata. Venue quartile will be missing for ~20% of papers.
+- **Paperclip API key required.** Free tier available at [paperclip.gxl.ai](https://paperclip.gxl.ai). Rate limits apply on the free tier; for high `max_papers_per_search` values, a paid key avoids throttling.
+- **No persistent vector index.** Each run starts fresh. Cross-domain surprise detection reads the existing `digest.md` for prior pairings but has no semantic memory of past papers.
+- **Author name disambiguation.** Paperclip looks up authors by name. Very common names (e.g. "John Smith") may match multiple researchers. Use the full name as it appears on papers, or add a distinctive co-author or institution in the `note` field as a hint.
+- **PMC open-access only.** PMC full text is limited to open-access papers. Closed-access journals are not in the corpus — Paperclip falls back to abstract-only for those via OpenAlex.
+- **Methods section parsing.** Section detection relies on standard headings. Some preprints use non-standard structure (e.g. no explicit "Methods" heading), in which case Paperclip returns the closest matching section.
 
 ## License
 
