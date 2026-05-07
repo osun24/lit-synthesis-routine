@@ -41,5 +41,16 @@
     "allow_preprints": true
   },
   "digest_output_file": "digest.md",
-  "max_connections_in_digest": 8
+  "max_connections_in_digest": 8,
+  "email_delivery": {
+    "enabled": false,
+    "provider": "resend",
+    "from": "onboarding@resend.dev",
+    "recipients": [
+      "you@example.com"
+    ],
+    "subject_prefix": "Weekly Synthesis",
+    "include_sections": ["watched_authors", "connections", "standalone_papers"],
+    "fallback_to_gmail_draft": false
+  }
 }

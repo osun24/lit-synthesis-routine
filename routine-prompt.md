@@ -195,5 +195,57 @@ PR body:
   - Top connection: {top_pair_domain_A} ↔ {top_pair_domain_B} (Score: {score}, Confidence: {confidence})
   - Watched author updates: {N}
 
+## Step 10 — Email delivery
+
+Skip this step entirely if `email_delivery.enabled` is false in config.
+
+### Primary path: Resend API
+
+Requires `RESEND_API_KEY` set in the routine's Environment. If the variable is empty or
+missing, fall through to the Gmail draft fallback (if enabled) or skip silently.
+
+Build the email body as HTML from the new digest section written in Step 8.
+Convert markdown to HTML using these rules:
+- `## Heading` → `<h2>`
+- `### Heading` → `<h3>`
+- `**bold**` → `<strong>`
+- `> blockquote` → `<blockquote style="border-left:3px solid #ccc;padding-left:1em;color:#555">`
+- `[text](url)` → `<a href="url">text</a>`
+- `- item` → `<li>` inside `<ul>`
+- Blank lines between paragraphs → `<p>` breaks
+- Wrap everything in:
+  `<div style="font-family:Georgia,serif;max-width:720px;margin:auto;padding:24px;color:#222">`
+
+Subject line: `{subject_prefix}: {MONDAY_DATE} – {FRIDAY_DATE} ({N} connections)`
+
+Send via Resend:
+
+  curl -s -X POST https://api.resend.com/emails \
+    -H "Authorization: Bearer $RESEND_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "from": "{email_delivery.from}",
+      "to": {email_delivery.recipients as JSON array},
+      "subject": "{subject_line}",
+      "html": "{html_body escaped for JSON}"
+    }'
+
+A 200 response with an `id` field means success. Log: "Email sent via Resend: {id}".
+A non-200 response: log the error but do not fail the routine — digest.md and the PR
+are already written, so email failure is non-fatal.
+
+### Fallback path: Gmail draft
+
+Only runs if `email_delivery.fallback_to_gmail_draft` is true AND Resend failed or
+`RESEND_API_KEY` is not set. Requires the Gmail MCP connector to be added to the routine.
+
+Use the Gmail connector to create a draft:
+- To: `email_delivery.recipients`
+- Subject: same subject line as above
+- Body: plain-text version of the new digest section (strip HTML tags)
+
+Note: Gmail drafts must be sent manually. The routine will add a comment to the PR:
+  "Email draft created in Gmail — send manually to complete delivery."
+
 Done.
 ```

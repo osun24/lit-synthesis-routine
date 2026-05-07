@@ -95,7 +95,24 @@ When creating the routine at `claude.ai/code/routines`, the Paperclip connector 
 
 Alternatively, add it directly from the routine form under **Connectors → Add connector**.
 
-### 4. Create the Claude routine
+### 4. Configure email delivery (optional)
+
+The routine can email the weekly digest automatically using the [Resend](https://resend.com) API — one HTTP call, free tier covers personal use (3,000 emails/month).
+
+**Quick setup:**
+
+1. Create a free account at [resend.com](https://resend.com) and copy your API key
+2. In `config.json`, set `email_delivery.enabled` to `true` and add your address(es) to `recipients`
+3. In the routine's **Environment** tab, add: `RESEND_API_KEY=re_xxxxxxxxxxxx`
+4. Leave `from` as `onboarding@resend.dev` for personal use — no domain required
+
+**Custom domain** (optional): If you want emails from `digest@yourdomain.com`, verify the domain in the Resend dashboard and update `from` in `config.json`. Resend walks through the DNS setup.
+
+**Gmail draft fallback**: If you'd rather not use Resend, set `fallback_to_gmail_draft: true` in `email_delivery` and add the Gmail connector to the routine. Claude will create a draft in your Gmail inbox instead of sending automatically — you send it manually. The Gmail connector is available at `claude.ai/settings/connectors`.
+
+> Note: The official Gmail connector cannot send emails autonomously — it can only create drafts. For a fully unattended routine, Resend is the right choice.
+
+### 5. Create the Claude routine
 
 **Option A — Web UI**
 
@@ -103,10 +120,11 @@ Alternatively, add it directly from the routine form under **Connectors → Add 
 2. **Name:** `Weekly Literature Synthesis`
 3. **Prompt:** Copy the entire contents of [`routine-prompt.md`](./routine-prompt.md) into the prompt field
 4. **Repository:** Add this repo (or your fork)
-5. **Connectors:** Enable **Paperclip**
-6. **Trigger:** Select **Weekly** — Monday morning works well
-7. **Branch push permission:** Leave default (`claude/`-prefixed branches only)
-8. Click **Create**
+5. **Environment:** Add `RESEND_API_KEY` if using email delivery
+6. **Connectors:** Enable **Paperclip** (and optionally **Gmail** for draft fallback)
+7. **Trigger:** Select **Weekly** — Monday morning works well
+8. **Branch push permission:** Leave default (`claude/`-prefixed branches only)
+9. Click **Create**
 
 **Option B — CLI**
 
@@ -169,6 +187,32 @@ Add any researcher by name — no database ID required. Paperclip's `lookup auth
 | Methods reading | Not possible | `cat /papers/{id}/sections/Methods.lines` |
 | Rate limits | Manual handling | Managed by Paperclip |
 
+## Email delivery config reference
+
+```json
+"email_delivery": {
+  "enabled": true,
+  "provider": "resend",
+  "from": "onboarding@resend.dev",
+  "recipients": ["you@example.com", "colleague@example.com"],
+  "subject_prefix": "Weekly Synthesis",
+  "include_sections": ["watched_authors", "connections", "standalone_papers"],
+  "fallback_to_gmail_draft": false
+}
+```
+
+| Field | Description |
+|---|---|
+| `enabled` | Set to `true` to activate email delivery |
+| `provider` | Always `"resend"` for now |
+| `from` | Sender address. Use `onboarding@resend.dev` for personal use (no setup). Add a verified domain for custom addresses. |
+| `recipients` | Array of recipient email addresses |
+| `subject_prefix` | Prepended to the subject: `"{prefix}: May 4 – May 11 (6 connections)"` |
+| `include_sections` | Which digest sections to include in the email. Options: `watched_authors`, `connections`, `standalone_papers` |
+| `fallback_to_gmail_draft` | If `true` and Resend fails or no API key is set, creates a Gmail draft instead. Requires Gmail connector. |
+
+**Environment variable required:** `RESEND_API_KEY` — set in the routine's Environment tab, not in `config.json`.
+
 ## Extending the config
 
 ### Adding authors to the watchlist
@@ -227,6 +271,7 @@ To include preprints for fastest coverage of emerging work:
 - **Author name disambiguation.** Paperclip looks up authors by name. Very common names (e.g. "John Smith") may match multiple researchers. Use the full name as it appears on papers, or add a distinctive co-author or institution in the `note` field as a hint.
 - **PMC open-access only.** PMC full text is limited to open-access papers. Closed-access journals are not in the corpus — Paperclip falls back to abstract-only for those via OpenAlex.
 - **Methods section parsing.** Section detection relies on standard headings. Some preprints use non-standard structure (e.g. no explicit "Methods" heading), in which case Paperclip returns the closest matching section.
+- **Gmail connector cannot send autonomously.** The official Claude Gmail connector creates drafts only — it cannot send emails without manual intervention. Use Resend for fully unattended delivery.
 
 ## License
 
