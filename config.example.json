@@ -1,4 +1,23 @@
 {
+  "researcher_context": {
+    "primary_field": "Describe your primary research field in one sentence",
+    "methodological_interests": [
+      "List the methods and techniques you use in your own work"
+    ],
+    "adjacent_fields_of_interest": [
+      "List adjacent fields you want to bridge to but don't actively track"
+    ],
+    "preferred_bridge": "describe_the_bridge_you_want_eg_statistical_to_mechanistic",
+    "bridge_description": "One paragraph describing the kind of cross-domain connection that would excite you most",
+    "connection_type_priority": [
+      "method_transfer",
+      "theoretical_unification",
+      "analogical_scaffolding"
+    ],
+    "avoid_topics": [
+      "List topics that should not appear in connections"
+    ]
+  },
   "sources": ["biorxiv", "medrxiv", "pmc", "arxiv"],
   "search_queries": [
     "machine learning neural networks representation learning",

@@ -1,0 +1,102 @@
+{
+  "researcher_context": {
+    "primary_field": "Computational biomedical research — lung cancer survival analysis and machine learning for adjuvant chemotherapy recommendations",
+    "methodological_interests": [
+      "Survival analysis and time-to-event modeling (Cox PH, deep survival, accelerated failure time)",
+      "Machine learning for treatment effect estimation and individualized treatment recommendation",
+      "Causal inference in observational oncology data",
+      "LLMs for meta-analysis screening and automated evidence synthesis"
+    ],
+    "adjacent_fields_of_interest": [
+      "Mathematical oncology and mechanistic tumor models (ODE, PDE, agent-based)",
+      "Tumor microenvironment biology — stromal, vascular, and immune compartments",
+      "Immuno-oncology, with specific interest in CAR T-cell therapy",
+      "Tumor immunology — T-cell exhaustion, antigen escape, neoantigen prediction",
+      "Scientific machine learning — physics-informed neural networks, neural ODEs, hybrid mechanistic-ML models"
+    ],
+    "preferred_bridge": "statistical_learning_to_mechanistic_biology",
+    "bridge_description": "Bridge statistical and ML approaches used in clinical oncology with mechanistic biological models from tumor immunology and CAR T-cell dynamics. Prioritise connections where mechanistic structure could inform a survival model, or where treatment-effect heterogeneity could be explained by an underlying mechanistic process.",
+    "connection_type_priority": [
+      "method_transfer",
+      "theoretical_unification",
+      "analogical_scaffolding"
+    ],
+    "avoid_topics": [
+      "general LLM benchmarking unrelated to biomedical use",
+      "non-cancer dynamical systems with no obvious biomedical relevance",
+      "purely engineering applications of physics-informed ML"
+    ]
+  },
+  "sources": ["biorxiv", "medrxiv", "pmc", "arxiv"],
+  "search_queries": [
+    "lung cancer survival prediction machine learning prognosis",
+    "non-small cell lung cancer NSCLC adjuvant chemotherapy treatment effect",
+    "individualized treatment recommendation causal inference oncology",
+    "large language models systematic review screening evidence synthesis",
+    "tumor microenvironment mathematical model immune cell dynamics",
+    "CAR T cell therapy mechanistic model dynamics solid tumor",
+    "tumor immune interaction agent based model spatial",
+    "T cell exhaustion antigen escape immunotherapy resistance",
+    "physics informed neural networks pharmacology drug response",
+    "scientific machine learning differential equations systems biology",
+    "hybrid mechanistic machine learning treatment response prediction",
+    "neural ODE survival analysis time to event"
+  ],
+  "watch_authors": [
+    {
+      "name": "Helen M. Byrne",
+      "note": "Mathematical oncology, tumor microenvironment, multiscale models (Oxford)"
+    },
+    {
+      "name": "Trachette Jackson",
+      "note": "Tumor-immune dynamics, mathematical biology of cancer (Michigan)"
+    },
+    {
+      "name": "Franziska Michor",
+      "note": "Computational cancer biology, evolution, treatment resistance (Dana-Farber)"
+    },
+    {
+      "name": "Carl H. June",
+      "note": "CAR T-cell therapy pioneer, cellular immunotherapy (UPenn)"
+    },
+    {
+      "name": "Crystal L. Mackall",
+      "note": "CAR T-cell therapy, solid tumors, T-cell biology (Stanford)"
+    },
+    {
+      "name": "Christopher Rackauckas",
+      "note": "Scientific machine learning, neural ODEs, hybrid mechanistic+ML (MIT)"
+    },
+    {
+      "name": "Iain J. Marshall",
+      "note": "Automated systematic reviews, NLP for evidence synthesis (King's College London)"
+    }
+  ],
+  "lookback_days": 7,
+  "max_papers_per_search": 100,
+  "max_author_papers_per_author": 5,
+  "ranking": {
+    "cross_domain_surprise_weight": 0.40,
+    "citation_velocity_weight": 0.20,
+    "venue_prestige_weight": 0.10,
+    "recency_weight": 0.30,
+    "recency_halflife_days": 120
+  },
+  "credibility_filters": {
+    "discard_predatory_journals": true,
+    "allow_preprints": true
+  },
+  "digest_output_file": "digest.md",
+  "max_connections_in_digest": 6,
+  "email_delivery": {
+    "enabled": false,
+    "provider": "resend",
+    "from": "onboarding@resend.dev",
+    "recipients": [
+      "owenzsun@gmail.com"
+    ],
+    "subject_prefix": "Lung Cancer + Mechanistic Synthesis",
+    "include_sections": ["watched_authors", "connections", "standalone_papers"],
+    "fallback_to_gmail_draft": false
+  }
+}

@@ -18,6 +18,13 @@ You are a weekly cross-domain scientific literature scout. Your job is to:
 Read `config.json` from this repository (copied from `config.example.json`).
 If `config.json` does not exist, use `config.example.json` as fallback.
 
+If `researcher_context` is present in the config, use it throughout the routine to:
+- Bias cross-domain pair selection so at least one paper in each pair relates to the
+  researcher's primary_field, methodological_interests, OR adjacent_fields_of_interest
+- Frame hypothesis generation in the direction of `preferred_bridge`
+- Order connections in the digest by `connection_type_priority`
+- Filter out pairs whose topic matches anything in `avoid_topics`
+
 All paper fetching and reading uses the Paperclip MCP, which covers:
 - PubMed Central (7.5M full-text, peer-reviewed)
 - arXiv (3M full-text, all categories)
@@ -110,7 +117,7 @@ Where:
 
 Weights come from `ranking` in config.
 
-## Step 7 — Identify cross-domain pairs
+## Step 7 — Identify cross-domain pairs (researcher-context aware)
 
 From the top 40 scored papers (plus all watched-author papers), find pairs where:
 - The two papers come from clearly different scientific domains
@@ -120,22 +127,51 @@ From the top 40 scored papers (plus all watched-author papers), find pairs where
 - Their methods, phenomena, or mathematical structures are semantically overlapping
   (judge this directly from the map output + methods snippets from Step 4)
 
+### Researcher-context filter (apply if `researcher_context` is in config)
+
+Discard any pair where NEITHER paper relates to the researcher's `primary_field`,
+`methodological_interests`, OR `adjacent_fields_of_interest`. The goal is bridges
+TO the researcher's work, not arbitrary cross-domain pairs.
+
+Discard any pair whose topic matches `avoid_topics`.
+
+### Hypothesis generation
+
 For each qualifying pair, generate:
-- A one-sentence connection hypothesis
-  ("If [method/concept X] from [Field A] were applied to [phenomenon Y] in [Field B],
-   one would predict [specific testable outcome]...")
+
+- A one-sentence connection hypothesis. If `preferred_bridge` is set, frame the
+  hypothesis in that direction. For example, with
+  preferred_bridge = "statistical_learning_to_mechanistic_biology":
+
+    "If the [mechanistic structure / dynamical model / immune circuit] described in
+     [Paper A — adjacent field], were embedded as a [neural ODE component / inductive
+     bias / structured prior] in the [survival model / treatment effect estimator /
+     evidence synthesis pipeline] of Paper B (researcher's field), one would predict
+     [specific testable outcome involving treatment heterogeneity, time-to-event,
+     or response prediction]."
+
 - Confidence: High / Medium / Low
   (High = same mathematical structure; Medium = strong analogy; Low = speculative)
 - A concrete research question or experiment that would test the connection
 - Why this connection is non-obvious
   (focus on: different vocabulary, different citation communities, different scales)
+- Connection type, drawn from `connection_type_priority`:
+  - method_transfer — a technique from one field directly imports into another
+  - theoretical_unification — both phenomena obey the same underlying structure
+  - analogical_scaffolding — thinking about Y as if it were X gives useful intuition
 
-Select the top `max_connections_in_digest` pairs by: (score_A + score_B) / 2 × surprise_factor
+### Ranking and ordering
 
-surprise_factor = 2.0 if this domain pair has never appeared together in digest.md before
-surprise_factor = 1.0 otherwise
+Select the top `max_connections_in_digest` pairs by:
+  (score_A + score_B) / 2 × surprise_factor × type_priority_multiplier
 
-To check: read the existing `digest.md` and scan for prior "↔" pairings.
+Where:
+  surprise_factor = 2.0 if this domain pair has never appeared together in digest.md before, else 1.0
+  type_priority_multiplier = 1.3 if connection_type matches connection_type_priority[0],
+                             1.1 if it matches connection_type_priority[1],
+                             1.0 otherwise
+
+To check digest history: read the existing `digest.md` and scan for prior "↔" pairings.
 
 ## Step 8 — Write digest
 
