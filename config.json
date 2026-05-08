@@ -12,11 +12,14 @@
       "Tumor microenvironment biology — stromal, vascular, and immune compartments",
       "Immuno-oncology, with specific interest in CAR T-cell therapy",
       "Tumor immunology — T-cell exhaustion, antigen escape, neoantigen prediction",
-      "Scientific machine learning — physics-informed neural networks, neural ODEs, hybrid mechanistic-ML models"
+      "Scientific machine learning — physics-informed neural networks, neural ODEs, hybrid mechanistic-ML models",
+      "Protein engineering and ML-driven protein design",
+      "Self-driving labs, autonomous experimentation, closed-loop active learning"
     ],
-    "preferred_bridge": "statistical_learning_to_mechanistic_biology",
-    "bridge_description": "Bridge statistical and ML approaches used in clinical oncology with mechanistic biological models from tumor immunology and CAR T-cell dynamics. Prioritise connections where mechanistic structure could inform a survival model, or where treatment-effect heterogeneity could be explained by an underlying mechanistic process.",
+    "preferred_bridge": "statistical_learning_to_mechanistic_biology_to_immunology",
+    "bridge_description": "The HIGHEST priority is the triple intersection: statistical/ML approaches in clinical oncology + mechanistic biological models + immunology (CAR T, T-cell biology, tumor-immune dynamics). Also valuable: protein engineering and self-driving labs as method transfer for CAR construct design and active learning in cellular therapy. Prioritise connections that REFRAME how a problem is approached — not connections that simply apply an existing method to a new dataset.",
     "connection_type_priority": [
+      "methodological_reframing",
       "method_transfer",
       "theoretical_unification",
       "analogical_scaffolding"
@@ -24,8 +27,43 @@
     "avoid_topics": [
       "general LLM benchmarking unrelated to biomedical use",
       "non-cancer dynamical systems with no obvious biomedical relevance",
+      "pure application papers — applying existing methods to new datasets without methodological insight",
+      "incremental benchmark improvements without new ideas",
       "purely engineering applications of physics-informed ML"
     ]
+  },
+  "quality_philosophy": {
+    "principle": "Quality over quantity. Surface a small number of extremely high-impact, high-quality papers worth deep reading, NOT a quota of mediocre work.",
+    "min_composite_score": 0.55,
+    "require_methodological_substance": true,
+    "deprioritize_pure_application": true,
+    "deprioritize_incremental_benchmarks": true,
+    "depth_over_breadth": true,
+    "shortage_is_acceptable": "If fewer than max_total_digest_papers meet the quality bar in a given week, the digest is shorter rather than padded. Explicitly note the shortage in the digest — do NOT lower the bar to fill space.",
+    "substance_signals": [
+      "Introduces a genuinely new method or theoretical framework",
+      "Reframes a known problem in a non-obvious way",
+      "Reports a surprising empirical finding that contradicts prior work",
+      "Bridges two fields in a way no prior paper has",
+      "Establishes a new mathematical equivalence between phenomena"
+    ],
+    "weak_signals_to_filter_out": [
+      "Yet another benchmark of an existing model on a new dataset",
+      "Application of a foundation model with no new method",
+      "Case studies without a generalisable conclusion",
+      "Surveys or reviews without a novel synthesis",
+      "Marginal improvements on existing scores"
+    ]
+  },
+  "digest_caps": {
+    "max_total_papers": 10,
+    "max_foundation_model_papers": 2,
+    "foundation_model_examples": [
+      "Evo2", "Evo", "AlphaFold", "AlphaFold3", "ESM", "ESM-2", "ESM-3",
+      "ProtGPT", "OpenFold", "RoseTTAFold", "Boltz", "Boltz-2", "Chai-1",
+      "GPT-4", "Claude", "Llama", "Mistral", "Gemini"
+    ],
+    "foundation_model_inclusion_rule": "Include a foundation-model paper ONLY if it introduces a new method, a new biological insight from the model, or a non-obvious reframing — never for benchmarks or applications alone."
   },
   "sources": ["biorxiv", "medrxiv", "pmc", "arxiv"],
   "search_queries": [
@@ -40,7 +78,11 @@
     "physics informed neural networks pharmacology drug response",
     "scientific machine learning differential equations systems biology",
     "hybrid mechanistic machine learning treatment response prediction",
-    "neural ODE survival analysis time to event"
+    "neural ODE survival analysis time to event",
+    "machine learning guided protein engineering directed evolution",
+    "self-driving laboratory autonomous experimentation closed loop",
+    "active learning Bayesian optimization protein design",
+    "CAR T cell receptor design protein engineering immunotherapy"
   ],
   "watch_authors": [
     {
@@ -70,6 +112,10 @@
     {
       "name": "Iain J. Marshall",
       "note": "Automated systematic reviews, NLP for evidence synthesis (King's College London)"
+    },
+    {
+      "name": "Philip A. Romero",
+      "note": "ML-driven protein engineering, directed evolution, self-driving labs (Duke)"
     }
   ],
   "lookback_days": 7,
@@ -95,7 +141,7 @@
     "recipients": [
       "owenzsun@gmail.com"
     ],
-    "subject_prefix": "Lung Cancer + Mechanistic Synthesis",
+    "subject_prefix": "Synthesis Digest",
     "include_sections": ["watched_authors", "connections", "standalone_papers"],
     "fallback_to_gmail_draft": false
   }
